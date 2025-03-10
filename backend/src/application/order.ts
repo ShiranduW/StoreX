@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import ValidationError from "../domain/errors/validation-error";
 import Order from "../infrastructure/schemas/Order";
+import Product from "../infrastructure/schemas/Product"; 
 import { getAuth } from "@clerk/express";
 import NotFoundError from "../domain/errors/not-found-error";
 import Address from "../infrastructure/schemas/Address";
@@ -19,17 +20,35 @@ export const createOrder = async (
 
     const userId = req.auth.userId;
 
+    // Validate stock for all items
+    for (const item of result.data.items) {
+      const productItem = await Product.findById(item.product._id);
+      if (!productItem || productItem.stock < item.quantity) {
+        throw new ValidationError(`Insufficient stock for product ${item.product._id}`);
+      }
+    }
+
     const address = await Address.create({
       ...result.data.shippingAddress,
     });
 
-    await Order.create({
+    // Create the order
+    const order = await Order.create({
       userId,
       items: result.data.items,
       addressId: address._id,
     });
 
-    res.status(201).send();
+    // Update inventory for each product
+    await Promise.all(result.data.items.map(item =>
+      Product.findOneAndUpdate(
+        { _id: item.product._id },
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      )
+    ));
+
+    res.status(201).json(order);
   } catch (error) {
     next(error);
   }

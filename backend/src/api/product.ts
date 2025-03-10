@@ -15,12 +15,14 @@ export const productRouter = express.Router();
 productRouter
   .route("/")
   .get(getProducts)
-  .post(isAuthenticated, isAdmin, createProduct); //Remove isAuthenticated and isAdmin for using with Postman
+  .post(isAuthenticated, isAdmin, createProduct);
+
 productRouter
   .route("/:id")
   .get(getProduct)
   .delete(isAuthenticated, isAdmin, deleteProduct)
   .patch(isAuthenticated, isAdmin, updateProduct);
 
-productRouter.patch("/:id/inventory");
+// Add the inventory update endpoint
+productRouter.patch("/:id/inventory", isAuthenticated, updateInventory);
 
