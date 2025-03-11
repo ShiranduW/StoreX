@@ -14,7 +14,7 @@ const app = express();
 app.use(express.json()); // For parsing JSON requests
 app.use(clerkMiddleware());
 app.use(cors({ 
-  origin: "http://localhost:5173",
+  origin: "https://fed-storex-frontend-shirandu.netlify.app/",
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
